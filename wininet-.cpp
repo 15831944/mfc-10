@@ -1,16 +1,6 @@
 
 VC 利用WinInet类实现HTTP或者FTP资源多线程下载(1)  
 2009-05-19 15:45:55
-          以前发在博客上的关于编程方面的都没有贴源码，今天有时间，把上午刚作了测试的一个dll动态链接库编写过程及源码贴出来，方便大家遇到类似方面的编程时的参考，也为了增加博客的访问量。此dll主要是对给定的url链接资源进行下载，dll中采用多线程实现。
-         下面简单讲解下如何开发dll，dll全称是Dynamic-Link Libray，在VC中建立开发DLL动态链接库工程的步骤如下：
-        1。打开VC->点击File->new菜单->在出现的对话框中，点击Projects标签页->选择Win32 Dynamic-Link Libray选项，输入工程名称比如DownloadThread，点击确定，如下图：
-                     
-     在接下来的界面中选择新建一个空的工程，然后点击完成，如下图：
-                    
-     2。在接下来出现的界面中，我们发现ClassView中是空白的，此时点击File->new菜单->在出现的标签页上选择Files标签页，选择C/C++Header File，输入文件名如DownloadThread，然后点击确定，如下图：             
-                        
-       
-       3。点击FileView中的Head Files->DownloadThread.h，输入类的头文件定义，如下：  
       /*
            2009.10.27更新, 由于看到这篇文章读者访问量较大, 特花了一天时间在原来的基础上更新了下, 主要是将原有的实现进行精简, 将所有的实现封装到类中实现, 方便程序调试和扩展, 并且加入了互斥对象操作, 使多线程在下载速度等临界区资源的操作上更加安全, 对中途异常结束线程提供了更好的管理.
           类采用线程技术完成http ftp下载, 已经过测试, 将在第二篇博客中提供测试程序, 欢迎下载测试.
@@ -1376,9 +1366,9 @@ delete pFile;
 }    
 return bRet;
 }
- 至此，工程已经全部建立结束，可以编译出想要的dll了，不过可能在某些电脑上会出现FtpCommand和FfpGetFileSize函数未定义的情况，我之前也遇到过，不过通过更新WinInet.h和WinInet.lib文件可以解决，如果你也遇到这样的情况，可以在博客上留言或者与我联系，我会将更新的WinInet.h和WinInet.lib免费赠予。
-4。下面简单对多线程实现HTTP和FTP下载作下介绍：
-在下载函数启动后，获取链接资源文件名和大小，然后根据指定下载线程数量指定下载线程中文件片断的起始下载字节流，HTTP中更容易控制，因为HTTP下载中允许向HTTP服务器发送下载文件片断的起始字节流，通过构造HTTP请求头实现，如指定下载0-100字节的数据构造如下：
+
+
+/*在下载函数启动后，获取链接资源文件名和大小，然后根据指定下载线程数量指定下载线程中文件片断的起始下载字节流，HTTP中更容易控制，因为HTTP下载中允许向HTTP服务器发送下载文件片断的起始字节流，通过构造HTTP请求头实现，如指定下载0-100字节的数据构造如下：
 //确定下载的字节流   
        strRangeQuest.Format(_T("%sRange: bytes=%d-%d\r\n"), szHeaders, 0, 100); 
        //参数dwHeadersLength为-1时发送到服务器的数据头长度在strRangeQuest不为空时将自动计算
@@ -1388,29 +1378,6 @@ return bRet;
         strRestPointCommand.Format(_T("REST %d\r\n"), 100);           
   //false代表不要求服务器返回数据
         FtpCommand((*pFtpConn), FALSE, FTP_TRANSFER_TYPE_ASCII, strRestPointCommand, 0, 0)；
-5。在外部工程中调用dll：
-将DownloadThread.h、DownloadThread.lib和DownloadThread.dll拷贝到工程目录下，在引用进添加如下语句：
-#include "DownloadThread.h"
-#pragma comment(lib, "DownloadThread.lib")
-6。dll测试：
-FTP下载测试：
-下载链接为外网上的一个免费FTP下载资源链接(链接可能已失效)：
-ftp://ftpuser:xt38kma7@ftp.zjuyc.com/%B3%A3%D3%C3%C8%ED%BC%FE/foxmail6.exe
-                        
-     测试时用的宽带，带宽为1M，极限速度为100Kb/s，效果还算满意。
-     HTTP下载测试：
-    下载链接为百度MP3上获取(链接可能已失效)：
-                          http://www.sh574.com/upload/%bd%ad%c4%cf.mp3
-                      
-                 效果较为理想。
-      测试中发现可能是由于URL编码的影响，URL解码获取下载文件名会出现乱码的情况，因为程序主要针对UTF8标准编码的URL链接，所以对于非标准UTF8编码可能会出现问题，也希望兴趣的朋友一起探讨。
-下面提供WinInet.lib和WININET.H以及测试工程源代码下载链接:
-1)测试工程(将上面的多线程下载工程编译好的Debug和Release版本的dll和lib文件分别拷贝到测试工程下的export目录下的Debug和Release目录下就可以了):
-http://scucloud.gicp.net:8081/download/DownloadTest.rar
-2)WinInet及相关头文件和库:
-http://scucloud.gicp.net:8081/download/WinInet.rar
-欢迎大家探讨.
-2009/11/15, 在做课程设计的时候遇到了dll在MFC加载失败的错误, 几经周折, 发现原来是自己在MFC工程中修改了DLL头文件定义导致, 因此才想起http和ftp下载测试工程调试时遇到的问题, 所以又不得不把以前的东西重新调试了下, 现在基本已经OK了, 更新后的测试工程中附带有工程使用的详细说明, 错误原因和改进办法以及测试的下载链接文件.
-学习是一个不断发现问题并且坚持解决问题的过程, 虽然辛苦, 但是收获却是很大的.
-更新于2009/11/15.
+*/
+                   
                                                                                                
